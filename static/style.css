@@ -1,0 +1,73 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 35px;
+    margin: 10px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 10px;
+}
+
+form {
+    margin-top: 10px;
+    text-align: center;
+}
+
+label {
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+#ssid-form, #password-form{
+    width: 800px;
+    text-align: left;
+    margin: auto;
+}
+
+select {
+    width: 37%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+input {
+    width: 35%;
+    padding: 8px;
+    margin-bottom: 10px;
+    margin-left: 40px;
+}
+
+input[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    width: 200px;
+    border-radius: 4px;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+a {
+    display: block;
+    margin-top: 20px;
+    color: #337ab7;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
