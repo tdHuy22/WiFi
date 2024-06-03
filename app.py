@@ -50,7 +50,7 @@ def turn_off_access_point():
 
 def open_kiosk_mode(url):
     try:
-        subprocess.Popen(['chromium-browser', '--kiosk', url])
+        subprocess.Popen(['chromium-browser', '--kiosk', '--enable-chrome-browser-cloud-management', url])
     except Exception as e:
         print(f"Error opening Chrome in kiosk mode: {e}")
 
