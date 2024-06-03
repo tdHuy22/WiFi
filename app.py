@@ -30,9 +30,11 @@ def get_ip_address():
 def turn_on_access_point():
     try:
         print("Turning on access point...")
-        subprocess.run(['sudo', 'systemctl', 'stop', 'dhcpcd'], check=True)
-        subprocess.run(['sudo', 'systemctl', 'start', 'NetworkManager'], check=True)
-        subprocess.run(['sudo', 'nmcli', 'device', 'wifi', 'hotspot', 'ifname', 'wlan0', 'con-name', 'UTK_Converter', 'ssid', 'RPI_Zero', 'password', 'RPI012345'], check=True)
+        subprocess.run(['sudo', 'service', 'dhcpcd', 'stop'], check=True)
+        subprocess.run(['sudo', 'service', 'NetworkManager', 'start'], check=True)
+        # subprocess.run(['sudo', 'nmcli', 'device', 'wifi', 'hotspot', 'ifname', 'wlan0', 'con-name', 'UTK_Converter', 'ssid', 'RPI_Zero', 'password', 'RPI012345'], check=True)
+        subprocess.run(['sudo', 'nmcli', 'device', 'connect', 'wlan0'], check=True)
+        subprocess.run(['sudo', 'nmcli', 'connection', 'up', 'UTK_Converter'], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error turning on access point: {e}")
 
@@ -40,8 +42,9 @@ def turn_off_access_point():
     try:
         print("Turning off access point...")
         subprocess.run(['sudo', 'nmcli', 'connection', 'down', 'UTK_Converter'], check=True)
-        subprocess.run(['sudo', 'systemctl', 'stop', 'NetworkManager'], check=True)
-        subprocess.run(['sudo', 'systemctl', 'start', 'dhcpcd'], check=True)
+        subprocess.run(['sudo', 'nmcli', 'device', 'disconnect', 'wlan0'], check=True)
+        subprocess.run(['sudo', 'service', 'NetworkManager', 'stop'], check=True)
+        subprocess.run(['sudo', 'service', 'dhcpcd', 'start'], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error turning off access point: {e}")
 
@@ -110,7 +113,7 @@ def connect():
     
     if check_internet_connection():
         print("Internet is connected.")
-        open_kiosk_mode('https://192.168.1.5:8000')
+        open_kiosk_mode('https://192.168.1.5:8000/screen')
         return "Internet is connected"
     else:
         print("Failed to connect to the internet. Re-enabling access point.")
@@ -120,7 +123,7 @@ def connect():
 if __name__ == '__main__':
     if check_internet_connection():
         print("Internet is connected.")
-        open_kiosk_mode('https://192.168.1.5:8000')
+        open_kiosk_mode('https://192.168.1.5:8000/screen')
     else:
         turn_on_access_point()
 
