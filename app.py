@@ -7,7 +7,6 @@ import webbrowser
 app = Flask(__name__)
 
 WiFi_List = []
-WPA_List = []
 
 def check_internet_connection():
     try:
@@ -30,21 +29,19 @@ def get_ip_address():
 def turn_on_access_point():
     try:
         print("Turning on access point...")
-        subprocess.run(['sudo', 'service', 'dhcpcd', 'stop'], check=True)
         subprocess.run(['sudo', 'service', 'NetworkManager', 'start'], check=True)
+        time.sleep(3)
         # subprocess.run(['sudo', 'nmcli', 'device', 'wifi', 'hotspot', 'ifname', 'wlan0', 'con-name', 'UTK_Converter', 'ssid', 'RPI_Zero', 'password', 'RPI012345'], check=True)
-        subprocess.run(['sudo', 'nmcli', 'device', 'connect', 'wlan0'], check=True)
         subprocess.run(['sudo', 'nmcli', 'connection', 'up', 'UTK_Converter'], check=True)
+        time.sleep(3)
     except subprocess.CalledProcessError as e:
         print(f"Error turning on access point: {e}")
 
 def turn_off_access_point():
     try:
         print("Turning off access point...")
-        subprocess.run(['sudo', 'nmcli', 'connection', 'down', 'UTK_Converter'], check=True)
-        subprocess.run(['sudo', 'nmcli', 'device', 'disconnect', 'wlan0'], check=True)
-        subprocess.run(['sudo', 'service', 'NetworkManager', 'stop'], check=True)
         subprocess.run(['sudo', 'service', 'dhcpcd', 'start'], check=True)
+        time.sleep(10)
     except subprocess.CalledProcessError as e:
         print(f"Error turning off access point: {e}")
 
@@ -55,13 +52,16 @@ def open_kiosk_mode(url):
         print(f"Error opening Chrome in kiosk mode: {e}")
 
 def continuous_internet_check():
+    accessPoint = False
     while True:
-        if not check_internet_connection():
-            turn_on_access_point()
-        else:
-            turn_off_access_point()
         time.sleep(60)  # Check every 60 seconds
-
+        if not check_internet_connection():
+            if not accessPoint:
+                turn_on_access_point()
+                accessPoint = True
+        else:
+            accessPoint = False
+        
 @app.route('/')
 def index():
     return render_template('index.html', WiFi_List=WiFi_List)
@@ -88,20 +88,10 @@ def connect():
     turn_off_access_point()
 
     try:
-        network_id = WPA_List.index(selected_wifi)
-    except ValueError:
-        network_id = None
-
-    try:
-        if network_id is not None:
-            subprocess.run(['sudo', 'wpa_cli', '-i', 'wlan0', 'set_network', str(network_id), 'psk', f'"{password}"'], check=True)
-        else:
-            connect_output = subprocess.check_output(['sudo', 'wpa_cli', '-i', 'wlan0', 'add_network']).decode('utf-8')
-            network_id = connect_output.strip()
-            subprocess.run(['sudo', 'wpa_cli', '-i', 'wlan0', 'set_network', network_id, 'ssid', f'"{selected_wifi}"'], check=True)
-            subprocess.run(['sudo', 'wpa_cli', '-i', 'wlan0', 'set_network', network_id, 'psk', f'"{password}"'], check=True)
-            WPA_List.append(selected_wifi)
-        
+        connect_output = subprocess.check_output(['sudo', 'wpa_cli', '-i', 'wlan0', 'add_network']).decode('utf-8')
+        network_id = connect_output.strip()
+        subprocess.run(['sudo', 'wpa_cli', '-i', 'wlan0', 'set_network', network_id, 'ssid', f'"{selected_wifi}"'], check=True)
+        subprocess.run(['sudo', 'wpa_cli', '-i', 'wlan0', 'set_network', network_id, 'psk', f'"{password}"'], check=True)
         subprocess.run(['sudo', 'wpa_cli', '-i', 'wlan0', 'enable_network', network_id], check=True)
         subprocess.run(['sudo', 'wpa_cli', '-i', 'wlan0', 'save_config'], check=True)
     except subprocess.CalledProcessError as e:
@@ -113,7 +103,7 @@ def connect():
     
     if check_internet_connection():
         print("Internet is connected.")
-        open_kiosk_mode('https://192.168.1.5:8000/screen')
+        # open_kiosk_mode('https://192.168.1.5:8000/screen')
         return "Internet is connected"
     else:
         print("Failed to connect to the internet. Re-enabling access point.")
@@ -123,13 +113,14 @@ def connect():
 if __name__ == '__main__':
     if check_internet_connection():
         print("Internet is connected.")
-        open_kiosk_mode('https://192.168.1.5:8000/screen')
+        # open_kiosk_mode('https://192.168.1.5:8000/screen')
     else:
         turn_on_access_point()
+        app.run(host=get_ip_address(), port=5050, debug=True)
 
     # Start continuous internet checking in a separate thread
-    internet_check_thread = threading.Thread(target=continuous_internet_check)
-    internet_check_thread.daemon = True
-    internet_check_thread.start()
+    # internet_check_thread = threading.Thread(target=continuous_internet_check)
+    # internet_check_thread.daemon = True
+    # internet_check_thread.start()
 
-    app.run(host='0.0.0.0', port=5050, debug=True)
+
